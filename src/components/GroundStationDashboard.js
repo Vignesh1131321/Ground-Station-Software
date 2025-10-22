@@ -1,285 +1,229 @@
-import React, { useEffect, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Satellite, Radio, Gauge, Zap, ThermometerSun, Activity, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Satellite, Radio, Activity, Zap, ThermometerSun, AlertTriangle, Globe } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api';
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-    color: 'white',
-    padding: '20px',
-    fontFamily: 'monospace'
-  },
-  header: {
-    marginBottom: '24px'
-  },
-  headerTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px'
-  },
-  headerTitle: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    margin: 0
-  },
-  statusBadge: {
-    padding: '8px 16px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: 'bold'
-  },
-  statusConnected: {
-    background: '#22c55e',
-    color: '#000'
-  },
-  statusDisconnected: {
-    background: '#ef4444',
-    color: '#fff'
-  },
-  alertPanel: {
-    background: 'rgba(153, 27, 27, 0.3)',
-    border: '1px solid #ef4444',
-    borderRadius: '8px',
-    padding: '12px',
-    marginBottom: '16px'
-  },
-  alertHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '8px'
-  },
-  alertText: {
-    fontSize: '14px',
-    color: '#fca5a5',
-    marginLeft: '28px'
-  },
-  gridContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '20px'
-  },
-  sidebar: {
-    background: 'rgba(30, 41, 59, 0.5)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(34, 211, 238, 0.3)',
-    borderRadius: '12px',
-    padding: '20px'
-  },
-  sidebarTitle: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: '#22d3ee',
-    marginBottom: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  },
-  formGroup: {
-    marginBottom: '16px'
-  },
-  label: {
-    display: 'block',
-    fontSize: '12px',
-    color: '#9ca3af',
-    marginBottom: '8px'
-  },
-  select: {
-    width: '100%',
-    background: '#334155',
-    border: '1px solid rgba(34, 211, 238, 0.3)',
-    borderRadius: '6px',
-    padding: '8px 12px',
-    color: 'white',
-    fontSize: '14px'
-  },
-  satelliteList: {
-    maxHeight: '250px',
-    overflowY: 'auto'
-  },
-  satelliteItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px',
-    background: 'rgba(51, 65, 85, 0.5)',
-    borderRadius: '6px',
-    marginBottom: '8px',
-    cursor: 'pointer',
-    transition: 'background 0.3s'
-  },
-  satelliteName: {
-    fontSize: '11px',
-    color: '#d1d5db'
-  },
-  infoSection: {
-    marginTop: '16px',
-    paddingTop: '16px',
-    borderTop: '1px solid rgba(34, 211, 238, 0.3)'
-  },
-  infoRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '4px 0',
-    fontSize: '12px'
-  },
-  mainContent: {
-    gridColumn: '1 / -1',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px'
-  },
-  cardsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px'
-  },
-  card: {
-    background: 'rgba(30, 41, 59, 0.5)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid',
-    borderRadius: '12px',
-    padding: '16px',
-    transition: 'transform 0.3s'
-  },
-  cardGood: {
-    borderColor: 'rgba(34, 197, 94, 0.5)',
-    background: 'rgba(34, 197, 94, 0.1)'
-  },
-  cardWarning: {
-    borderColor: 'rgba(234, 179, 8, 0.5)',
-    background: 'rgba(234, 179, 8, 0.1)'
-  },
-  cardCritical: {
-    borderColor: 'rgba(239, 68, 68, 0.5)',
-    background: 'rgba(239, 68, 68, 0.1)'
-  },
-  cardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '8px'
-  },
-  cardTitle: {
-    fontSize: '12px',
-    color: '#9ca3af'
-  },
-  cardValue: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    fontFamily: 'monospace'
-  },
-  cardSubtitle: {
-    fontSize: '11px',
-    color: '#6b7280',
-    marginTop: '4px'
-  },
-  chartsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '16px'
-  },
-  chartCard: {
-    background: 'rgba(30, 41, 59, 0.9)',
-    border: '1px solid rgba(34, 211, 238, 0.3)',
-    borderRadius: '12px',
-    padding: '20px'
-  },
-  chartTitle: {
-    fontSize: '14px',
-    fontWeight: 'bold',
-    color: '#22d3ee',
-    marginBottom: '16px'
-  },
-  emptyState: {
-    background: 'rgba(30, 41, 59, 0.5)',
-    border: '1px solid rgba(34, 211, 238, 0.3)',
-    borderRadius: '12px',
-    padding: '48px',
-    textAlign: 'center'
-  },
-  loadingContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'
-  },
-  spinner: {
-    width: '64px',
-    height: '64px',
-    border: '4px solid rgba(34, 211, 238, 0.3)',
-    borderTop: '4px solid #22d3ee',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
-  }
-};
 
 const GroundStationDashboard = () => {
   const [satelliteGroups, setSatelliteGroups] = useState({});
   const [selectedGroup, setSelectedGroup] = useState('space_stations');
-  const [selectedSatellites, setSelectedSatellites] = useState(['ISS (ZARYA)']);
+  const [selectedSatellite, setSelectedSatellite] = useState('ISS (ZARYA)');
   const [telemetryData, setTelemetryData] = useState(null);
-  const [historicalData, setHistoricalData] = useState([]);
+  const [satellitePosition, setSatellitePosition] = useState(null);
+  const [orbitPath, setOrbitPath] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [cesiumLoaded, setCesiumLoaded] = useState(false);
   const [alerts, setAlerts] = useState([]);
+  const [viewMode, setViewMode] = useState('2d');
+
+  const cesiumContainerRef = React.useRef(null);
+  const viewerRef = React.useRef(null);
+  const satelliteEntityRef = React.useRef(null);
+
+  // Check if Cesium is loaded
+  useEffect(() => {
+    if (window.Cesium) {
+      setCesiumLoaded(true);
+    } else {
+      console.warn('Cesium not loaded. Running in 2D mode.');
+      // Try to load Cesium dynamically
+      const script = document.createElement('script');
+      script.src = 'https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/Cesium.js';
+      script.async = true;
+      script.onload = () => {
+        setCesiumLoaded(true);
+        if (viewMode === '3d') {
+          initializeCesium();
+        }
+      };
+      
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/Widgets/widgets.css';
+      
+      document.head.appendChild(link);
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  // Initialize Cesium when switching to 3D mode
+  useEffect(() => {
+    if (viewMode === '3d' && cesiumLoaded && !viewerRef.current) {
+      initializeCesium();
+    }
+    
+    return () => {
+      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+        viewerRef.current.destroy();
+        viewerRef.current = null;
+      }
+    };
+  }, [viewMode, cesiumLoaded]);
 
   useEffect(() => {
     fetchSatelliteGroups();
-    const interval = setInterval(() => {
-      if (selectedSatellites.length > 0) {
-        fetchTelemetryData();
+  }, []);
+
+  useEffect(() => {
+    if (selectedSatellite) {
+      fetchData();
+      const interval = setInterval(fetchData, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedSatellite]);
+
+  const initializeCesium = async () => {
+    if (!cesiumContainerRef.current || !window.Cesium) return;
+
+    try {
+      window.Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5N2UyMjcwOS00MDY1LTQxYjEtYjZjMy00YTU0ZTg1YmJjMGIiLCJpZCI6ODAzMDYsImlhdCI6MTY0Mjc0ODI2MX0.dkwAL1CcljUV7NA7fDbhXXnmyZQU_c-G5zRx8PtEcxE';
+
+      viewerRef.current = new window.Cesium.Viewer(cesiumContainerRef.current, {
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        baseLayerPicker: false,
+        navigationHelpButton: false,
+        infoBox: true,
+        selectionIndicator: true,
+        shadows: false,
+        shouldAnimate: true
+      });
+
+      viewerRef.current.scene.globe.enableLighting = true;
+      viewerRef.current.camera.setView({
+        destination: window.Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
+      });
+
+      // Update visualization if data already exists
+      if (satellitePosition && orbitPath.length > 0) {
+        updateSatelliteVisualization(satellitePosition, orbitPath);
       }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [selectedSatellites]);
+    } catch (error) {
+      console.error('Error initializing Cesium:', error);
+    }
+  };
 
   const fetchSatelliteGroups = async () => {
     try {
       const response = await fetch(`${API_BASE}/satellites/groups`);
       const data = await response.json();
       setSatelliteGroups(data.groups || {});
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching satellite groups:', error);
-      setLoading(false);
     }
   };
 
-  const fetchTelemetryData = async () => {
+  const fetchData = async () => {
     try {
-      const satName = selectedSatellites[0];
-      const response = await fetch(`${API_BASE}/satellite/${encodeURIComponent(satName)}/telemetry`);
-      const data = await response.json();
-      
-      setTelemetryData(data);
-      setIsConnected(true);
-      
-      setHistoricalData(prev => {
-        const newData = [...prev, {
-          time: new Date(data.timestamp).toLocaleTimeString(),
-          battery: data.battery_voltage,
-          temp: data.temperature_internal,
-          cpu: data.cpu_usage
-        }];
-        return newData.slice(-20);
-      });
+      const posResponse = await fetch(`${API_BASE}/satellite/${encodeURIComponent(selectedSatellite)}/position`);
+      const posData = await posResponse.json();
+      setSatellitePosition(posData);
 
-      checkAlerts(data);
+      const telResponse = await fetch(`${API_BASE}/satellite/${encodeURIComponent(selectedSatellite)}/telemetry`);
+      const telData = await telResponse.json();
+      setTelemetryData(telData);
+
+      const orbitResponse = await fetch(`${API_BASE}/satellite/${encodeURIComponent(selectedSatellite)}/orbit`);
+      const orbitData = await orbitResponse.json();
+      setOrbitPath(orbitData);
+
+      setIsConnected(true);
+      checkAlerts(telData);
+      
+      if (viewMode === '3d' && viewerRef.current && posData.latitude && posData.longitude) {
+        updateSatelliteVisualization(posData, orbitData);
+      }
     } catch (error) {
-      console.error('Error fetching telemetry:', error);
+      console.error('Error fetching data:', error);
       setIsConnected(false);
     }
+  };
+
+  const updateSatelliteVisualization = (position, orbit) => {
+    if (!viewerRef.current || !window.Cesium) return;
+
+    viewerRef.current.entities.removeAll();
+
+    const satellitePos = window.Cesium.Cartesian3.fromDegrees(
+      position.longitude,
+      position.latitude,
+      position.altitude * 1000
+    );
+
+    satelliteEntityRef.current = viewerRef.current.entities.add({
+      name: position.name,
+      position: satellitePos,
+      point: {
+        pixelSize: 10,
+        color: window.Cesium.Color.CYAN,
+        outlineColor: window.Cesium.Color.WHITE,
+        outlineWidth: 2
+      },
+      label: {
+        text: position.name,
+        font: '14pt Arial',
+        pixelOffset: new window.Cesium.Cartesian2(0, -20),
+        fillColor: window.Cesium.Color.WHITE,
+        outlineColor: window.Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: window.Cesium.LabelStyle.FILL_AND_OUTLINE
+      }
+    });
+
+    if (orbit && orbit.length > 0) {
+      const positions = orbit.map(point => 
+        window.Cesium.Cartesian3.fromDegrees(
+          point.longitude,
+          point.latitude,
+          point.altitude * 1000
+        )
+      );
+
+      viewerRef.current.entities.add({
+        name: 'Orbit Path',
+        polyline: {
+          positions: positions,
+          width: 2,
+          material: window.Cesium.Color.CYAN.withAlpha(0.6)
+        }
+      });
+    }
+
+    const groundStation = window.Cesium.Cartesian3.fromDegrees(77.5946, 12.9716, 0);
+    viewerRef.current.entities.add({
+      name: 'Ground Station',
+      position: groundStation,
+      point: {
+        pixelSize: 12,
+        color: window.Cesium.Color.YELLOW,
+        outlineColor: window.Cesium.Color.BLACK,
+        outlineWidth: 2
+      },
+      label: {
+        text: '🏢 Ground Station',
+        font: '12pt Arial',
+        pixelOffset: new window.Cesium.Cartesian2(0, -20),
+        fillColor: window.Cesium.Color.YELLOW,
+        style: window.Cesium.LabelStyle.FILL
+      }
+    });
+
+    viewerRef.current.entities.add({
+      name: 'Link',
+      polyline: {
+        positions: [satellitePos, groundStation],
+        width: 2,
+        material: new window.Cesium.PolylineDashMaterialProperty({
+          color: window.Cesium.Color.YELLOW.withAlpha(0.5),
+          dashLength: 16
+        })
+      }
+    });
+
+    viewerRef.current.zoomTo(satelliteEntityRef.current);
   };
 
   const checkAlerts = (data) => {
@@ -291,7 +235,7 @@ const GroundStationDashboard = () => {
       newAlerts.push({ type: 'warning', msg: `High CPU: ${data.cpu_usage.toFixed(0)}%` });
     }
     if (data.temperature_internal > 35 || data.temperature_internal < -5) {
-      newAlerts.push({ type: 'warning', msg: `Temperature alert: ${data.temperature_internal.toFixed(1)}°C` });
+      newAlerts.push({ type: 'warning', msg: `Temperature: ${data.temperature_internal.toFixed(1)}°C` });
     }
     setAlerts(newAlerts);
   };
@@ -302,294 +246,317 @@ const GroundStationDashboard = () => {
       const response = await fetch(`${API_BASE}/satellites/groups?group=${groupKey}`);
       const data = await response.json();
       if (data.satellites && data.satellites.length > 0) {
-        setSelectedSatellites([data.satellites[0]]);
+        setSelectedSatellite(data.satellites[0]);
       }
     } catch (error) {
-      console.error('Error fetching group satellites:', error);
+      console.error('Error:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <div style={styles.loadingContainer}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={styles.spinner}></div>
-          <p style={{ marginTop: '16px', color: '#22d3ee', fontFamily: 'monospace' }}>
-            Initializing Ground Station...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div style={styles.container}>
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .satellite-item:hover {
-          background: #475569 !important;
-        }
-      `}</style>
-
-      <div style={styles.header}>
-        <div style={styles.headerTop}>
-          <div style={styles.headerTitle}>
+    <div style={{ display: 'flex', height: '100vh', background: '#0f172a', fontFamily: 'monospace', overflow: 'hidden' }}>
+      {/* Left Sidebar */}
+      <div style={{ width: '350px', background: 'rgba(30, 41, 59, 0.95)', borderRight: '1px solid #22d3ee', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid rgba(34, 211, 238, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <Satellite size={32} color="#22d3ee" />
-            <h1 style={styles.title}>Ground Station Control</h1>
+            <h1 style={{ margin: 0, fontSize: '20px', color: '#22d3ee' }}>Ground Station</h1>
           </div>
-          <div style={{...styles.statusBadge, ...(isConnected ? styles.statusConnected : styles.statusDisconnected)}}>
+          <div style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', background: isConnected ? '#22c55e' : '#ef4444', color: isConnected ? '#000' : '#fff', textAlign: 'center' }}>
             {isConnected ? '● LIVE' : '● OFFLINE'}
           </div>
         </div>
 
+        {/* View Mode Toggle */}
+        <div style={{ padding: '16px', borderBottom: '1px solid rgba(34, 211, 238, 0.3)' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>View Mode</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setViewMode('2d')}
+              style={{ flex: 1, padding: '8px', background: viewMode === '2d' ? '#22d3ee' : 'rgba(34, 211, 238, 0.2)', border: '1px solid #22d3ee', color: viewMode === '2d' ? '#000' : '#22d3ee', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+            >
+              📊 2D Map
+            </button>
+            <button
+              onClick={() => setViewMode('3d')}
+              style={{ flex: 1, padding: '8px', background: viewMode === '3d' ? '#22d3ee' : 'rgba(34, 211, 238, 0.2)', border: '1px solid #22d3ee', color: viewMode === '3d' ? '#000' : '#22d3ee', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+            >
+              🌍 3D Globe
+            </button>
+          </div>
+          {viewMode === '3d' && !cesiumLoaded && (
+            <p style={{ fontSize: '10px', color: '#eab308', marginTop: '8px' }}>⚠️ Loading Cesium library...</p>
+          )}
+        </div>
+
         {alerts.length > 0 && (
-          <div style={styles.alertPanel}>
-            <div style={styles.alertHeader}>
-              <AlertTriangle size={20} color="#f87171" />
-              <span style={{ fontWeight: 'bold', color: '#f87171' }}>Active Alerts</span>
+          <div style={{ margin: '16px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: '#f87171' }}>
+              <AlertTriangle size={16} />
+              <strong>Alerts</strong>
             </div>
             {alerts.map((alert, i) => (
-              <div key={i} style={styles.alertText}>{alert.msg}</div>
+              <div key={i} style={{ fontSize: '12px', color: '#fca5a5', marginLeft: '24px' }}>{alert.msg}</div>
             ))}
+          </div>
+        )}
+
+        <div style={{ padding: '16px' }}>
+          <label style={{ display: 'block', fontSize: '12px', color: '#9ca3af', marginBottom: '8px' }}>Group</label>
+          <select 
+            value={selectedGroup}
+            onChange={(e) => handleGroupChange(e.target.value)}
+            style={{ width: '100%', background: '#334155', border: '1px solid #22d3ee', borderRadius: '6px', padding: '8px', color: 'white', fontSize: '14px' }}
+          >
+            {Object.entries(satelliteGroups).map(([key, group]) => (
+              <option key={key} value={key}>{group.name} ({group.count})</option>
+            ))}
+          </select>
+
+          <label style={{ display: 'block', fontSize: '12px', color: '#9ca3af', marginTop: '12px', marginBottom: '8px' }}>Satellite</label>
+          <select 
+            value={selectedSatellite}
+            onChange={(e) => setSelectedSatellite(e.target.value)}
+            style={{ width: '100%', background: '#334155', border: '1px solid #22d3ee', borderRadius: '6px', padding: '8px', color: 'white', fontSize: '14px' }}
+          >
+            {satelliteGroups[selectedGroup]?.satellites?.map(sat => (
+              <option key={sat} value={sat}>{sat}</option>
+            ))}
+          </select>
+        </div>
+
+        {satellitePosition && (
+          <div style={{ padding: '16px', borderTop: '1px solid rgba(34, 211, 238, 0.3)' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#22d3ee' }}>📍 Position</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#9ca3af' }}>Latitude:</span>
+                <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{satellitePosition.latitude?.toFixed(4)}°</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#9ca3af' }}>Longitude:</span>
+                <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{satellitePosition.longitude?.toFixed(4)}°</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#9ca3af' }}>Altitude:</span>
+                <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{satellitePosition.altitude?.toFixed(2)} km</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#9ca3af' }}>Velocity:</span>
+                <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>{satellitePosition.velocity?.toFixed(2)} km/s</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {telemetryData && (
+          <div style={{ padding: '16px', borderTop: '1px solid rgba(34, 211, 238, 0.3)', flex: 1 }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#22d3ee' }}>⚡ Telemetry</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <TelemetryCard
+                icon={<Zap size={20} />}
+                title="Battery"
+                value={`${telemetryData.battery_voltage?.toFixed(1)}V`}
+                subtitle={`${telemetryData.battery_current?.toFixed(2)}A`}
+                status={telemetryData.battery_voltage > 27 ? 'good' : 'warning'}
+              />
+              <TelemetryCard
+                icon={<ThermometerSun size={20} />}
+                title="Temperature"
+                value={`${telemetryData.temperature_internal?.toFixed(1)}°C`}
+                subtitle="Internal"
+                status={telemetryData.temperature_internal > -5 && telemetryData.temperature_internal < 35 ? 'good' : 'warning'}
+              />
+              <TelemetryCard
+                icon={<Activity size={20} />}
+                title="CPU"
+                value={`${telemetryData.cpu_usage?.toFixed(0)}%`}
+                subtitle={`Mem: ${telemetryData.memory_usage?.toFixed(0)}%`}
+                status={telemetryData.cpu_usage < 80 ? 'good' : 'warning'}
+              />
+              <TelemetryCard
+                icon={<Radio size={20} />}
+                title="Signal"
+                value={`${telemetryData.signal_strength?.toFixed(0)} dBm`}
+                subtitle={`${telemetryData.data_rate?.toFixed(1)} Mbps`}
+                status="good"
+              />
+            </div>
           </div>
         )}
       </div>
 
-      <div style={styles.gridContainer}>
-        <div style={styles.sidebar}>
-          <h2 style={styles.sidebarTitle}>
-            <Radio size={20} />
-            Satellite Control
-          </h2>
+      {/* Main Content */}
+      <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {viewMode === '3d' ? (
+          <>
+            <div 
+              ref={cesiumContainerRef}
+              style={{ width: '100%', height: '100%', display: cesiumLoaded ? 'block' : 'none' }}
+            />
+            
+            {!cesiumLoaded && (
+              <div style={{ textAlign: 'center', color: '#22d3ee' }}>
+                <Globe size={64} style={{ margin: '0 auto 20px', animation: 'spin 2s linear infinite' }} />
+                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                <p style={{ fontSize: '18px', marginBottom: '8px' }}>Loading 3D Earth Viewer...</p>
+                <p style={{ fontSize: '12px', opacity: 0.7 }}>Fetching Cesium library</p>
+              </div>
+            )}
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Group</label>
-            <select 
-              value={selectedGroup}
-              onChange={(e) => handleGroupChange(e.target.value)}
-              style={styles.select}
-            >
-              {Object.entries(satelliteGroups).map(([key, group]) => (
-                <option key={key} value={key}>
-                  {group.name} ({group.count})
-                </option>
-              ))}
-            </select>
+            {cesiumLoaded && satelliteEntityRef.current && (
+              <div style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(30, 41, 59, 0.95)', border: '1px solid #22d3ee', borderRadius: '8px', padding: '16px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#22d3ee' }}>📹 Camera</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button
+                    onClick={() => viewerRef.current?.zoomTo(satelliteEntityRef.current)}
+                    style={{ background: 'rgba(34, 211, 238, 0.2)', border: '1px solid #22d3ee', color: '#22d3ee', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                  >
+                    🎯 Track Satellite
+                  </button>
+                  <button
+                    onClick={() => viewerRef.current?.camera.setView({ destination: window.Cesium.Cartesian3.fromDegrees(0, 0, 20000000) })}
+                    style={{ background: 'rgba(34, 211, 238, 0.2)', border: '1px solid #22d3ee', color: '#22d3ee', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                  >
+                    🌍 Global View
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <MapView satellitePosition={satellitePosition} orbitPath={orbitPath} />
+        )}
+
+        {satellitePosition && (
+          <div style={{ position: 'absolute', bottom: '20px', left: '20px', background: 'rgba(30, 41, 59, 0.95)', border: '1px solid #22d3ee', borderRadius: '8px', padding: '12px', fontSize: '12px', color: '#22d3ee', maxWidth: '300px' }}>
+            <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>🛰️ {satellitePosition.name}</div>
+            <div>Last Update: {new Date().toLocaleTimeString()}</div>
+            <div>System Health: {telemetryData?.system_health?.toFixed(0)}%</div>
           </div>
-
-          <div>
-            <label style={styles.label}>Satellites</label>
-            <div style={styles.satelliteList}>
-              {satelliteGroups[selectedGroup]?.satellites?.slice(0, 10).map(sat => (
-                <label 
-                  key={sat} 
-                  className="satellite-item"
-                  style={styles.satelliteItem}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedSatellites.includes(sat)}
-                    onChange={() => setSelectedSatellites([sat])}
-                    style={{ accentColor: '#22d3ee' }}
-                  />
-                  <span style={styles.satelliteName}>{sat}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {telemetryData && (
-            <div style={styles.infoSection}>
-              <div style={styles.infoRow}>
-                <span style={{ color: '#9ca3af' }}>System Health:</span>
-                <span style={{ fontWeight: 'bold', color: '#22d3ee' }}>
-                  {telemetryData.system_health?.toFixed(0)}%
-                </span>
-              </div>
-              <div style={styles.infoRow}>
-                <span style={{ color: '#9ca3af' }}>Data Rate:</span>
-                <span style={{ fontWeight: 'bold', color: '#22d3ee' }}>
-                  {telemetryData.data_rate?.toFixed(2)} Mbps
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div style={styles.mainContent}>
-          {telemetryData && (
-            <>
-              <div style={styles.cardsGrid}>
-                <TelemetryCard
-                  icon={<Zap size={24} />}
-                  title="Battery"
-                  value={`${telemetryData.battery_voltage?.toFixed(1)}V`}
-                  subtitle={`${telemetryData.battery_current?.toFixed(2)}A`}
-                  status={telemetryData.battery_voltage > 27 ? 'good' : telemetryData.battery_voltage > 25 ? 'warning' : 'critical'}
-                />
-                <TelemetryCard
-                  icon={<ThermometerSun size={24} />}
-                  title="Temperature"
-                  value={`${telemetryData.temperature_internal?.toFixed(1)}°C`}
-                  subtitle="Internal"
-                  status={telemetryData.temperature_internal > -5 && telemetryData.temperature_internal < 35 ? 'good' : 'warning'}
-                />
-                <TelemetryCard
-                  icon={<Activity size={24} />}
-                  title="CPU Usage"
-                  value={`${telemetryData.cpu_usage?.toFixed(0)}%`}
-                  subtitle={`Mem: ${telemetryData.memory_usage?.toFixed(0)}%`}
-                  status={telemetryData.cpu_usage < 80 ? 'good' : 'warning'}
-                />
-                <TelemetryCard
-                  icon={<Gauge size={24} />}
-                  title="Signal"
-                  value={`${telemetryData.signal_strength?.toFixed(0)} dBm`}
-                  subtitle={`${telemetryData.data_rate?.toFixed(1)} Mbps`}
-                  status="good"
-                />
-              </div>
-
-              <div style={styles.chartsGrid}>
-                <ChartCard title="Power System">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={historicalData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#94a3b8" tick={{ fontSize: 10 }} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #22d3ee' }}
-                        labelStyle={{ color: '#22d3ee' }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Line type="monotone" dataKey="battery" stroke="#22d3ee" name="Battery (V)" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-
-                <ChartCard title="Thermal System">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={historicalData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#94a3b8" tick={{ fontSize: 10 }} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #ef4444' }}
-                        labelStyle={{ color: '#ef4444' }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Line type="monotone" dataKey="temp" stroke="#ef4444" name="Temp (°C)" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-
-                <ChartCard title="System Resources">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={historicalData.slice(-5)}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#94a3b8" tick={{ fontSize: 10 }} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #a855f7' }}
-                        labelStyle={{ color: '#a855f7' }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: '12px' }} />
-                      <Bar dataKey="cpu" fill="#a855f7" name="CPU %" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-
-                <ChartCard title="Attitude & Control">
-                  <div style={{ padding: '16px' }}>
-                    <AttitudeIndicator label="Roll" value={telemetryData.attitude_x} />
-                    <AttitudeIndicator label="Pitch" value={telemetryData.attitude_y} />
-                    <AttitudeIndicator label="Yaw" value={telemetryData.attitude_z} />
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #334155' }}>
-                      <div style={styles.infoRow}>
-                        <span>Reaction Wheel:</span>
-                        <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>
-                          {telemetryData.reaction_wheel_speed?.toFixed(0)} RPM
-                        </span>
-                      </div>
-                      <div style={styles.infoRow}>
-                        <span>Fuel Remaining:</span>
-                        <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>
-                          {telemetryData.thruster_fuel?.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </ChartCard>
-              </div>
-            </>
-          )}
-
-          {!telemetryData && (
-            <div style={styles.emptyState}>
-              <Satellite size={64} color="#22d3ee" style={{ opacity: 0.5, margin: '0 auto 16px' }} />
-              <p style={{ color: '#9ca3af', fontSize: '18px', marginBottom: '8px' }}>No Telemetry Data</p>
-              <p style={{ color: '#6b7280', fontSize: '14px' }}>Select a satellite to view real-time telemetry</p>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
+  );
+};
+
+const MapView = ({ satellitePosition, orbitPath }) => {
+  const canvasRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!canvasRef.current || !satellitePosition) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear canvas
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw grid
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.2)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 180; i += 30) {
+      const y = (i / 180) * height;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(width, y);
+      ctx.stroke();
+    }
+    for (let i = 0; i <= 360; i += 30) {
+      const x = (i / 360) * width;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, height);
+      ctx.stroke();
+    }
+
+    // Draw orbit path
+    if (orbitPath && orbitPath.length > 0) {
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      orbitPath.forEach((point, i) => {
+        const x = ((point.longitude + 180) / 360) * width;
+        const y = ((90 - point.latitude) / 180) * height;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    // Draw satellite
+    const satX = ((satellitePosition.longitude + 180) / 360) * width;
+    const satY = ((90 - satellitePosition.latitude) / 180) * height;
+    
+    ctx.fillStyle = '#22d3ee';
+    ctx.beginPath();
+    ctx.arc(satX, satY, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw ground station
+    const gsLon = 77.5946;
+    const gsLat = 12.9716;
+    const gsX = ((gsLon + 180) / 360) * width;
+    const gsY = ((90 - gsLat) / 180) * height;
+    
+    ctx.fillStyle = '#eab308';
+    ctx.beginPath();
+    ctx.arc(gsX, gsY, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw connection line
+    ctx.strokeStyle = 'rgba(234, 179, 8, 0.5)';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(satX, satY);
+    ctx.lineTo(gsX, gsY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle = '#22d3ee';
+    ctx.font = '12px monospace';
+    ctx.fillText('🛰️', satX + 12, satY - 12);
+    
+    ctx.fillStyle = '#eab308';
+    ctx.fillText('🏢', gsX + 10, gsY - 10);
+
+  }, [satellitePosition, orbitPath]);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      width={1200} 
+      height={600}
+      style={{ maxWidth: '100%', maxHeight: '100%', border: '1px solid #22d3ee', borderRadius: '8px' }}
+    />
   );
 };
 
 const TelemetryCard = ({ icon, title, value, subtitle, status }) => {
-  const statusStyle = status === 'good' ? styles.cardGood : 
-                      status === 'warning' ? styles.cardWarning : styles.cardCritical;
-  
-  const textColor = status === 'good' ? '#22c55e' : 
-                    status === 'warning' ? '#eab308' : '#ef4444';
+  const statusColors = {
+    good: { bg: 'rgba(34, 197, 94, 0.1)', border: '#22c55e', text: '#22c55e' },
+    warning: { bg: 'rgba(234, 179, 8, 0.1)', border: '#eab308', text: '#eab308' },
+    critical: { bg: 'rgba(239, 68, 68, 0.1)', border: '#ef4444', text: '#ef4444' }
+  };
+
+  const colors = statusColors[status];
 
   return (
-    <div style={{...styles.card, ...statusStyle}}>
-      <div style={styles.cardHeader}>
-        <div style={{ color: textColor }}>{icon}</div>
-        <span style={styles.cardTitle}>{title}</span>
+    <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ color: colors.text }}>{icon}</div>
+        <span style={{ fontSize: '11px', color: '#9ca3af' }}>{title}</span>
       </div>
-      <div style={{...styles.cardValue, color: textColor}}>{value}</div>
-      <div style={styles.cardSubtitle}>{subtitle}</div>
-    </div>
-  );
-};
-
-const ChartCard = ({ title, children }) => (
-  <div style={styles.chartCard}>
-    <h3 style={styles.chartTitle}>{title}</h3>
-    {children}
-  </div>
-);
-
-const AttitudeIndicator = ({ label, value }) => {
-  const normalizedValue = Math.max(-10, Math.min(10, value || 0));
-  const percentage = ((normalizedValue + 10) / 20) * 100;
-  
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-      <span style={{ fontSize: '12px', color: '#9ca3af', width: '48px' }}>{label}</span>
-      <div style={{ flex: 1, background: '#334155', borderRadius: '9999px', height: '8px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '2px', height: '12px', background: '#6b7280' }}></div>
-        </div>
-        <div 
-          style={{ 
-            background: '#22d3ee', 
-            height: '100%', 
-            borderRadius: '9999px',
-            transition: 'width 0.3s',
-            width: `${percentage}%`
-          }}
-        />
-      </div>
-      <span style={{ fontSize: '12px', color: '#22d3ee', fontFamily: 'monospace', width: '64px', textAlign: 'right' }}>
-        {value?.toFixed(2)}°
-      </span>
+      <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.text }}>{value}</div>
+      <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>{subtitle}</div>
     </div>
   );
 };
